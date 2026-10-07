@@ -10,7 +10,7 @@
 [![Skills](https://img.shields.io/badge/skills-4-brightgreen.svg)](catalog/INDEX.md)
 [![Version](https://img.shields.io/badge/version-v1.0.0-blue.svg)](CHANGELOG.md)
 
-A curated library of reusable AI-agent skills for Unity game development, distilled from the complete "Streets Adventure: Medina Motors" journey (200+ lessons, 85 knowledge atoms, 24 skills, 10 tools, 6 prompt patterns).
+A curated library of reusable AI-agent skills for Unity game development, distilled from a complete production Unity journey (200+ lessons, 85 knowledge atoms, 24 skills, 10 tools, 6 prompt patterns).
 
 ## About
 
@@ -99,7 +99,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md)
 See [docs/MAINTENANCE.md](docs/MAINTENANCE.md) — new lessons → atoms → skills via `skill-distillation` skill.
 
 ## Origin
-Distilled from the complete "Streets Adventure: Medina Motors" journey (Unity 6, URP, Mirror, Enviro 3) including:
+Distilled from a complete production Unity project journey (Unity 6, URP, Mirror, Enviro 3) including:
 - POLISH-SWEEP v2 (17 video-4 defects resolved)
 - DEEP-FIX-SWEEP v2 (9 phases, weapons purge, UI originality, touch reskin)
 - PERF-60 (60fps mobile methodology, 14 lessons)
