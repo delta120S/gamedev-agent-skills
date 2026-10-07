@@ -1,7 +1,26 @@
+<p align="center">
+  <img src="docs/assets/banner-repo.png" alt="GameDev Agent Skills Library banner" width="100%">
+</p>
+
 # GameDev Agent Skills Library
+
 **Provenance-First • Granularity Law • Secret-Free • MIT Licensed**
 
+[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Skills](https://img.shields.io/badge/skills-4-brightgreen.svg)](catalog/INDEX.md)
+[![Version](https://img.shields.io/badge/version-v1.0.0-blue.svg)](CHANGELOG.md)
+
 A curated library of reusable AI-agent skills for Unity game development, distilled from the complete "Streets Adventure: Medina Motors" journey (200+ lessons, 85 knowledge atoms, 24 skills, 10 tools, 6 prompt patterns).
+
+## About
+
+<img src="docs/assets/emblem-256.png" alt="SkillForge emblem" width="180" align="right">
+
+**GameDev Agent Skills Library** is a provenance-first collection of agent skills for Unity game development — every procedure step traces back to a real project failure or verified win via `[src:...]` tags. Skills are self-contained, MIT-licensed, and drop-in for Claude Code, OpenCode, and other agents.
+
+Ships with 4 production-verified skills, 10 standalone tools, 6 prompt patterns, and a knowledge catalog built for agent consumption.
+
+<br clear="all">
 
 ## Philosophy
 
@@ -60,6 +79,15 @@ cp -r skills/* <your-unity-project>/.opencode/skills/
 - **verified** — ≥90% steps provenance-tagged, ≥1 real past failure in PITFALLS
 - **mixed** — Single source or partial evidence
 - **inferred** — >30% atoms UNVERIFIED (published with `draft: true` + DRAFT banner)
+
+## Gallery
+
+| Hero Poster | Emblem |
+|---|---|
+| <img src="docs/assets/hero-poster.png" alt="Hero poster" width="560"> | <img src="docs/assets/emblem-logo.png" alt="Project emblem" width="420"> |
+| *SkillForge key art — the provenance-first skill library in action.* | *Project emblem — original mark for the GameDev Agent Skills Library.* |
+
+Brand assets: original AI-generated artwork (Gemini) created for this project; no third-party rights.
 
 ## License
 MIT — see [LICENSE](LICENSE)

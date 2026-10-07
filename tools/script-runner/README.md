@@ -8,7 +8,7 @@
 ## Usage
 ```powershell
 # Stage script to stable path
-$stableRoot = "D:\game\gameadv\_SA_TOOLING\staged-scripts"
+$stableRoot = "<PLACEHOLDER>\staged-scripts"
 $scriptPath = Join-Path $stableRoot "myscript.ps1"
 if (-not (Test-Path -LiteralPath $scriptPath)) { throw "Script not staged" }
 & $scriptPath -Args "value"
@@ -25,7 +25,7 @@ if (-not (Test-Path -LiteralPath $scriptPath)) { throw "Script not staged" }
 - 3: Script execution error
 
 ## Key Lessons
-- **L-103:** `%TEMP%\opencode` staging vanished between runs → stage on stable drive (`D:\game\gameadv\_SA_TOOLING\staged-scripts`)
+- **L-103:** `%TEMP%\opencode` staging vanished between runs → stage on stable drive (`<PLACEHOLDER>\staged-scripts`)
 - **L-140:** PS variable names case-insensitive → `$R` overwrites `$r`; never reuse var with only case difference
 - **L-140:** Scope insert searches to header block (e.g., `-lt 200` lines) not whole file
 - **L-140:** Keep `ErrorActionPreference = Stop` so bad assumptions fail before mutating
