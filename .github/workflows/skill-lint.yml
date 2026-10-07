@@ -1,0 +1,230 @@
+name: Skill Lint
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check frontmatter
+        run: |
+          echo "Checking frontmatter in skills/..."
+          for f in skills/**/SKILL.md; do
+            echo "Checking $f"
+            # Required fields
+            for field in name description license provenance confidence created maintainer draft; do
+              if ! grep -q "^$field:" "$f"; then
+                echo "::error file=$f::Missing frontmatter field: $field"
+                exit 1
+              fi
+            done
+            # License must be MIT
+            if ! grep -q "^license: MIT" "$f"; then
+              echo "::error file=$f::License must be MIT"
+              exit 1
+            fi
+            # Confidence must be valid
+            if ! grep -q "^confidence: verified\|^confidence: mixed\|^confidence: inferred" "$f"; then
+              echo "::error file=$f::Confidence must be verified|mixed|inferred"
+              exit 1
+            fi
+            # Draft must be boolean
+            if ! grep -q "^draft: true\|^draft: false" "$f"; then
+              echo "::error file=$f::Draft must be true|false"
+              exit 1
+            fi
+          done
+          echo "Frontmatter OK"
+
+      - name: Check section order
+        run: |
+          echo "Checking section order in skills/..."
+          for f in skills/**/SKILL.md; do
+            echo "Checking $f"
+            sections=("WHEN" "WHY" "PROCEDURE" "PITFALLS" "VERIFY" "ESCALATE" "REFERENCES")
+            last_line=0
+            for section in "${sections[@]}"; do
+              line=$(grep -n "^## $section" "$f" | head -1 | cut -d: -f1)
+              if [ -z "$line" ]; then
+                echo "::error file=$f::Missing section: $section"
+                exit 1
+              fi
+              if [ "$line" -lt "$last_line" ]; then
+                echo "::error file=$f::Section order violation: $section at line $line (previous at $last_line)"
+                exit 1
+              fi
+              last_line=$line
+            done
+          done
+          echo "Section order OK"
+
+      - name: Check provenance tags
+        run: |
+          echo "Checking provenance tags in skills/..."
+          for f in skills/**/SKILL.md; do
+            echo "Checking $f"
+            # Count PROCEDURE steps
+            proc_lines=$(grep -n "^[0-9]\+\." "$f" | wc -l)
+            # Count provenance tags
+            prov_tags=$(grep -c "\[src:" "$f" || true)
+            # Count UNVERIFIED markers
+            unverified=$(grep -c "UNVERIFIED" "$f" || true)
+            tagged=$((prov_tags + unverified))
+            if [ "$proc_lines" -gt 0 ]; then
+              pct=$((tagged * 100 / proc_lines))
+              if [ "$pct" -lt 90 ]; then
+                echo "::warning file=$f::Provenance coverage ${pct}% (target ≥90%)"
+              fi
+            fi
+          done
+          echo "Provenance tags checked"
+
+      - name: Check cross-links
+        run: |
+          echo "Checking cross-links in skills/..."
+          for f in skills/**/SKILL.md; do
+            echo "Checking $f"
+            # Find skill references in REFERENCES section
+            in_refs=false
+            while IFS= read -r line; do
+              if [[ "$line" == "## REFERENCES" ]]; then
+                in_refs=true
+                continue
+              fi
+              if [[ "$in_refs" == true && "$line" =~ ^##\  ]]; then
+                in_refs=false
+              fi
+              if [[ "$in_refs" == true ]]; then
+                # Check for skill-id references
+                if [[ "$line" =~ skills/([a-z0-9-]+)/SKILL\.md ]]; then
+                  skill_id="${BASH_REMATCH[1]}"
+                  if [ ! -d "skills/$skill_id" ]; then
+                    echo "::error file=$f::Broken cross-link to skills/$skill_id"
+                    exit 1
+                  fi
+                fi
+              fi
+            done < "$f"
+          done
+          echo "Cross-links OK"
+
+      - name: Check size limits
+        run: |
+          echo "Checking size limits in skills/..."
+          for f in skills/**/SKILL.md; do
+            lines=$(wc -l < "$f")
+            if [ "$lines" -gt 400 ]; then
+              echo "::error file=$f::SKILL.md exceeds 400 lines ($lines) — split required per [C-06]"
+              exit 1
+            fi
+            if [ "$lines" -lt 40 ]; then
+              echo "::warning file=$f::SKILL.md under 40 lines ($lines) — consider merge/demote per [C-06]"
+            fi
+          done
+          echo "Size limits OK"
+
+      - name: Check tool READMEs
+        run: |
+          echo "Checking tool READMEs..."
+          for d in tools/*/; do
+            readme="$d/README.md"
+            if [ ! -f "$readme" ]; then
+              echo "::error file=$d::Missing README.md"
+              exit 1
+            fi
+            for field in Purpose Usage "Exit Codes" "Sandbox-Safe" Tested Provenance; do
+              if ! grep -qi "$field" "$readme"; then
+                echo "::error file=$readme::Missing required section: $field"
+                exit 1
+              fi
+            done
+          done
+          echo "Tool READMEs OK"
+
+      - name: Check prompt patterns
+        run: |
+          echo "Checking prompt patterns..."
+          for f in prompts/*.md; do
+            echo "Checking $f"
+            for section in "When to Use" "When NOT to Use" "ANTI-LOOP" "SKILLS REQUIRED" "PLACEHOLDERS"; do
+              if ! grep -qi "$section" "$f"; then
+                echo "::error file=$f::Missing required section: $section"
+                exit 1
+              fi
+            done
+            # Check for absolute paths/secrets
+            if grep -qE "(C:\\\\|D:\\\\|/home/|/Users/|password|token|key|secret)" "$f"; then
+              echo "::error file=$f::Contains absolute paths or potential secrets"
+              exit 1
+            fi
+          done
+          echo "Prompt patterns OK"
+
+      - name: Check catalog bijection
+        run: |
+          echo "Checking catalog INDEX.md ↔ skills/ folders bijection..."
+          # Get skill IDs from catalog
+          catalog_skills=$(grep -o '`[a-z0-9-]*`' catalog/INDEX.md | tr -d '`' | sort -u)
+          # Get skill IDs from folders
+          folder_skills=$(ls -1 skills/ | sort -u)
+          # Compare
+          if [ "$catalog_skills" != "$folder_skills" ]; then
+            echo "::error::Catalog ↔ folders mismatch"
+            echo "In catalog not in folders:"
+            comm -23 <(echo "$catalog_skills") <(echo "$folder_skills")
+            echo "In folders not in catalog:"
+            comm -13 <(echo "$catalog_skills") <(echo "$folder_skills")
+            exit 1
+          fi
+          echo "Catalog bijection OK"
+
+      - name: Secret scan
+        run: |
+          echo "Running secret scan..."
+          # Patterns from Appendix F
+          patterns=(
+            "api[_-]?key"
+            "secret"
+            "password"
+            "token"
+            "connection[_-]?string"
+            "private[_-]?key"
+            "aws[_-]?secret"
+            "github[_-]?token"
+            "C:\\\\Users\\\\"
+            "D:\\\\"
+            "/home/"
+            "/Users/"
+          )
+          found=0
+          for pattern in "${patterns[@]}"; do
+            if grep -rqi "$pattern" --exclude-dir=.git --exclude=*.png --exclude=*.jpg --exclude=*.jpeg --exclude=*.gif --exclude=*.ico --exclude=*.woff --exclude=*.woff2 --exclude=*.ttf --exclude=*.eot --exclude=*.svg .; then
+              echo "::warning::Potential secret/PII pattern '$pattern' found"
+              found=1
+            fi
+          done
+          if [ "$found" -eq 0 ]; then
+            echo "Secret scan clean"
+          fi
+
+      - name: License consistency
+        run: |
+          echo "Checking license consistency..."
+          # Check repo LICENSE exists
+          if [ ! -f LICENSE ]; then
+            echo "::error::Missing LICENSE file"
+            exit 1
+          fi
+          # Check all skills have MIT
+          for f in skills/**/SKILL.md; do
+            if ! grep -q "^license: MIT" "$f"; then
+              echo "::error file=$f::License not MIT"
+              exit 1
+            fi
+          done
+          echo "License consistency OK"
